@@ -66,6 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     showError('Please upload only .PPTX or .PPT files for this tool.');
                     return;
                 }
+            } else if (currentAction === 'convert_docx') {
+                if (ext !== 'docx' && ext !== 'doc') {
+                    showError('Please upload only .DOCX or .DOC files for this tool.');
+                    return;
+                }
             } else if (currentAction === 'merge_pdf') {
                 if (ext !== 'pdf') {
                     showError('Please upload only .PDF files for this tool.');
@@ -109,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update Process Button State
         let isValid = false;
-        if (currentAction === 'convert_pdf') {
+        if (currentAction === 'convert_pdf' || currentAction === 'convert_docx') {
             isValid = currentFiles.length > 0;
         } else {
             isValid = currentFiles.length > 1; // Merge requires at least 2

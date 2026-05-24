@@ -74,6 +74,11 @@ def handle_convert_pdf():
     files = request.files.getlist('files')
     return process_files(files, core.convert_presentations_to_pdf)
 
+@app.route('/api/convert_docx', methods=['POST'])
+def handle_convert_docx():
+    files = request.files.getlist('files')
+    return process_files(files, core.convert_docx_to_pdf)
+
 @app.route('/api/merge_pdf', methods=['POST'])
 def handle_merge_pdf():
     files = request.files.getlist('files')

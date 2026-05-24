@@ -67,8 +67,8 @@ def merge_presentations(input_files, output_dir):
     
     return output_path
 
-def convert_presentations_to_pdf(input_files, output_dir):
-    """Converts PPT/PPTX files to PDF. Zips them if multiple."""
+def _convert_to_pdf_helper(input_files, output_dir):
+    """Generic helper that converts files to PDF using LibreOffice headless mode and zips them if there are multiple."""
     if not input_files:
         raise ValueError("No files provided for conversion.")
         
@@ -104,6 +104,14 @@ def convert_presentations_to_pdf(input_files, output_dir):
             zipf.write(pdf_file, arcname=os.path.basename(pdf_file))
             
     return zip_path
+
+def convert_presentations_to_pdf(input_files, output_dir):
+    """Converts PPT/PPTX files to PDF. Zips them if multiple."""
+    return _convert_to_pdf_helper(input_files, output_dir)
+
+def convert_docx_to_pdf(input_files, output_dir):
+    """Converts DOCX/DOC files to PDF. Zips them if multiple."""
+    return _convert_to_pdf_helper(input_files, output_dir)
 
 def merge_pdfs(input_files, output_dir):
     """Merges multiple PDF files into one."""
