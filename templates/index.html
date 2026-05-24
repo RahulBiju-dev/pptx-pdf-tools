@@ -3,36 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Tools</title>
+    <title>Document Tools - Merge & Convert PPTX, DOCX, and PDF Files</title>
+    <meta name="description" content="A premium, secure utility to merge and convert presentations (PPTX/PPT), Word documents (DOCX), and PDF files instantly in your browser. Fully processed locally.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/index.css">
 </head>
 <body>
-    <main class="minimal-container">
+    <!-- Premium background glowing blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <main class="minimal-container" id="main-container">
         <header>
             <h1>Document Tools</h1>
-            <p>Seamlessly merge & convert your presentations and documents.</p>
+            <p>Seamlessly merge & convert your presentations and documents with privacy.</p>
         </header>
 
-        <nav class="tabs">
-            <button class="tab-btn active" data-action="merge_pptx">Merge PPTX/PPT</button>
-            <button class="tab-btn" data-action="convert_pdf">PPTX/PPT to PDF</button>
-            <button class="tab-btn" data-action="convert_docx">DOCX to PDF</button>
-            <button class="tab-btn" data-action="merge_pdf">Merge PDF</button>
+        <nav class="tabs" aria-label="Tool Selection">
+            <button id="tab-merge-pptx" class="tab-btn active" data-action="merge_pptx">Merge PPTX/PPT</button>
+            <button id="tab-convert-pdf" class="tab-btn" data-action="convert_pdf">PPTX to PDF</button>
+            <button id="tab-convert-docx" class="tab-btn" data-action="convert_docx">DOCX to PDF</button>
+            <button id="tab-merge-pdf" class="tab-btn" data-action="merge_pdf">Merge PDF</button>
         </nav>
 
-        <section class="upload-section">
-            <div id="drop-zone" class="drop-zone">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <section class="upload-section" aria-label="File Upload and Processing">
+            <div id="drop-zone" class="drop-zone" tabindex="0">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
                     <line x1="12" y1="3" x2="12" y2="15"></line>
                 </svg>
                 <p>Drag & Drop your files here</p>
                 <span class="or">OR</span>
-                <button class="browse-btn" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                <button id="btn-browse" class="browse-btn" onclick="document.getElementById('file-input').click()">Browse Files</button>
                 <input type="file" id="file-input" multiple hidden>
             </div>
             
@@ -44,11 +49,17 @@
 
             <div id="loading" class="loading hidden">
                 <div class="spinner"></div>
-                <p>Processing your files, please wait...</p>
+                <p>Processing files, please wait...</p>
             </div>
             
             <div id="error-msg" class="error-msg hidden"></div>
         </section>
+
+        <footer class="footer" style="margin-top: 32px; text-align: center; border-top: 1px solid rgba(225, 29, 72, 0.06); padding-top: 20px;">
+            <p style="font-size: 0.8rem; color: #9ca3af; font-weight: 500;">
+                🔒 Secure local processing. Files are processed within your environment.
+            </p>
+        </footer>
     </main>
 
     <script src="/static/app.js"></script>
