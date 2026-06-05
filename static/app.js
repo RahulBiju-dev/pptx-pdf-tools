@@ -163,14 +163,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Handle Download
             const blob = await response.blob();
             
-            // Try to extract filename from content-disposition header if present
-            let filename = 'download';
+            // Use DocTools_{timestamp} as the default filename, extracting extension if available
+            let filename = `DocTools_${Date.now()}`;
             const disposition = response.headers.get('content-disposition');
             if (disposition && disposition.indexOf('attachment') !== -1) {
                 const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
                 const matches = filenameRegex.exec(disposition);
                 if (matches != null && matches[1]) { 
-                    filename = matches[1].replace(/['"]/g, '');
+                    const serverFilename = matches[1].replace(/['"]/g, '');
+                    const extIndex = serverFilename.lastIndexOf('.');
+                    if (extIndex !== -1) {
+                        const ext = serverFilename.substring(extIndex);
+                        filename = `DocTools_${Date.now()}${ext}`;
+                    }
                 }
             }
             
