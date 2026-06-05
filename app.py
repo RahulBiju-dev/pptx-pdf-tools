@@ -4,9 +4,39 @@ import tempfile
 import io
 from flask import Flask, request, send_file, render_template, jsonify
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
 import core
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+csp = {
+    'default-src': '\'self\'',
+    'style-src': [
+        '\'self\'',
+        'https://fonts.googleapis.com'
+    ],
+    'font-src': [
+        '\'self\'',
+        'https://fonts.gstatic.com'
+    ],
+    'script-src': [
+        '\'self\'',
+        '\'unsafe-inline\''
+    ]
+}
+Talisman(app, content_security_policy=csp, force_https=False)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
 # Allow large uploads for presentations
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024 # 500 MB
 
@@ -18,6 +48,9 @@ def process_files(files, action_func):
     if not files or all(f.filename == '' for f in files):
         return jsonify({'error': 'No files uploaded'}), 400
         
+    if len(files) > 10:
+        return jsonify({'error': 'Maximum of 10 files allowed per request'}), 400
+        
     temp_dir = tempfile.mkdtemp()
     input_files = []
     
@@ -25,6 +58,13 @@ def process_files(files, action_func):
         # Save files to temp directory securely
         for f in files:
             if f.filename:
+                # Check file size (50MB = 50 * 1024 * 1024 bytes)
+                f.seek(0, os.SEEK_END)
+                file_size = f.tell()
+                f.seek(0)
+                if file_size > 50 * 1024 * 1024:
+                    return jsonify({'error': f'File {f.filename} exceeds the 50MB size limit'}), 400
+                    
                 filename = secure_filename(f.filename)
                 file_path = os.path.join(temp_dir, filename)
                 f.save(file_path)
@@ -65,21 +105,25 @@ def process_files(files, action_func):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/merge_pptx', methods=['POST'])
+@limiter.limit("10 per minute")
 def handle_merge_pptx():
     files = request.files.getlist('files')
     return process_files(files, core.merge_presentations)
     
 @app.route('/api/convert_pdf', methods=['POST'])
+@limiter.limit("10 per minute")
 def handle_convert_pdf():
     files = request.files.getlist('files')
     return process_files(files, core.convert_presentations_to_pdf)
 
 @app.route('/api/convert_docx', methods=['POST'])
+@limiter.limit("10 per minute")
 def handle_convert_docx():
     files = request.files.getlist('files')
     return process_files(files, core.convert_docx_to_pdf)
 
 @app.route('/api/merge_pdf', methods=['POST'])
+@limiter.limit("10 per minute")
 def handle_merge_pdf():
     files = request.files.getlist('files')
     return process_files(files, core.merge_pdfs)

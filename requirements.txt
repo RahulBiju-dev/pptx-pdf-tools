@@ -3,3 +3,5 @@ pypdf
 Flask
 Werkzeug
 python-pptx
+Flask-Limiter
+Flask-Talisman
