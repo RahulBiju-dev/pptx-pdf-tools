@@ -48,8 +48,8 @@ def process_files(files, action_func):
     if not files or all(f.filename == '' for f in files):
         return jsonify({'error': 'No files uploaded'}), 400
         
-    if len(files) > 10:
-        return jsonify({'error': 'Maximum of 10 files allowed per request'}), 400
+    if len(files) > 15:
+        return jsonify({'error': 'Maximum of 15 files allowed per request'}), 400
         
     temp_dir = tempfile.mkdtemp()
     input_files = []
