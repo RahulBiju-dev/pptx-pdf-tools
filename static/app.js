@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFiles = [];
     let currentAction = 'merge_pptx';
     let isProcessing = false;
+    let hasCustomOrder = false;
+    const filenameOrder = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
     
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -13,6 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const orderHint = document.getElementById('order-hint');
     const orderStatus = document.getElementById('order-status');
     
+    const sortBtn = document.getElementById('sort-files');
+    sortBtn.addEventListener('click', () => {
+        if (isProcessing) return;
+        hasCustomOrder = false;
+        currentFiles.sort((a, b) => filenameOrder.compare(a.name, b.name));
+        updateUI();
+        orderStatus.textContent = 'Files sorted by name, numbers first in natural order.';
+    });
+
     // Tab Switching
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -23,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // clear files on tab switch
             currentFiles = [];
+            hasCustomOrder = false;
             updateUI();
         });
     });
@@ -86,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentFiles.push(file);
         });
         
+        if (!hasCustomOrder) currentFiles.sort((a, b) => filenameOrder.compare(a.name, b.name));
         updateUI();
         // Reset file input so same file can be selected again if removed
         fileInput.value = '';
@@ -99,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileList.innerHTML = '';
         const isMerge = currentAction === 'merge_pptx' || currentAction === 'merge_pdf';
         orderHint.classList.toggle('hidden', !isMerge || currentFiles.length === 0);
+        sortBtn.disabled = isProcessing || currentFiles.length < 2;
         currentFiles.forEach((file, index) => {
             const item = document.createElement('div');
             item.className = 'file-item';
@@ -119,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 grip.className = 'drag-grip';
                 grip.textContent = '⠿';
                 grip.setAttribute('aria-hidden', 'true');
+                grip.title = 'Drag to reorder';
                 item.prepend(grip);
                 item.classList.toggle('reorderable', !isProcessing);
                 item.tabIndex = isProcessing ? -1 : 0;
@@ -131,50 +146,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     event.preventDefault();
                     const target = index + direction;
                     if (target < 0 || target >= currentFiles.length) return;
+                    hasCustomOrder = true;
                     currentFiles.splice(target, 0, currentFiles.splice(index, 1)[0]);
                     updateUI();
                     fileList.children[target].focus();
                     orderStatus.textContent = `${file.name} moved to position ${target + 1} of ${currentFiles.length}.`;
                 });
 
-                item.addEventListener('pointerdown', event => {
-                    if (isProcessing || event.button !== 0 || event.target.closest('button')) return;
+                item.draggable = !isProcessing;
+                let destination = index;
+                const clearMarkers = () => {
+                    fileList.querySelectorAll('.drop-before, .drop-after').forEach(row => {
+                        row.classList.remove('drop-before', 'drop-after');
+                    });
+                };
+                const locateDrop = clientY => {
+                    clearMarkers();
+                    const rows = Array.from(fileList.children).filter(row => row !== item);
+                    const next = rows.find(row => clientY < row.getBoundingClientRect().top + row.offsetHeight / 2);
+                    destination = next ? rows.indexOf(next) : rows.length;
+                    if (next) next.classList.add('drop-before');
+                    else if (rows.length) rows[rows.length - 1].classList.add('drop-after');
+                };
+                const finishDrag = commit => {
+                    clearMarkers();
+                    item.classList.remove('dragging');
+                    if (!commit || isProcessing) return;
+                    hasCustomOrder = true;
+                    currentFiles.splice(destination, 0, currentFiles.splice(index, 1)[0]);
+                    updateUI(false);
+                    fileList.children[destination].focus();
+                    orderStatus.textContent = `${file.name} moved to position ${destination + 1} of ${currentFiles.length}.`;
+                };
+                item.addEventListener('dragstart', event => {
+                    if (isProcessing || event.target.closest('button')) {
+                        event.preventDefault();
+                        return;
+                    }
+                    event.stopPropagation();
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', file.name);
+                    item.classList.add('dragging');
+                    const over = event => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                        locateDrop(event.clientY);
+                    };
+                    const drop = event => {
+                        event.preventDefault();
+                        locateDrop(event.clientY);
+                        cleanup();
+                        finishDrag(true);
+                    };
+                    const cleanup = () => {
+                        fileList.removeEventListener('dragover', over);
+                        fileList.removeEventListener('drop', drop);
+                    };
+                    item.addEventListener('dragend', () => { cleanup(); finishDrag(false); }, { once: true });
+                    fileList.addEventListener('dragover', over);
+                    fileList.addEventListener('drop', drop);
+                });
+                // Touch uses the grip so the rest of the row still scrolls normally.
+                grip.addEventListener('pointerdown', event => {
+                    if (isProcessing || event.pointerType === 'mouse') return;
+                    event.preventDefault();
                     const pointerId = event.pointerId;
-                    const startY = event.clientY;
-                    let dragging = false;
-                    fileList.setPointerCapture(pointerId);
-
+                    grip.setPointerCapture(pointerId);
+                    item.classList.add('dragging');
                     const move = event => {
-                        if (event.pointerId !== pointerId) return;
-                        if (!dragging && Math.abs(event.clientY - startY) < 5) return;
-                        dragging = true;
-                        item.classList.add('dragging');
-                        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.file-item');
-                        if (!target || target === item || target.parentElement !== fileList) return;
-                        const rows = Array.from(fileList.children);
-                        const from = rows.indexOf(item);
-                        const to = rows.indexOf(target);
-                        currentFiles.splice(to, 0, currentFiles.splice(from, 1)[0]);
-                        fileList.insertBefore(item, from < to ? target.nextSibling : target);
-                        Array.from(fileList.children).forEach((row, position) => {
-                            row.querySelector('.file-position').textContent = `${position + 1}.`;
-                        });
+                        if (event.pointerId === pointerId) locateDrop(event.clientY);
                     };
                     const finish = event => {
                         if (event.pointerId !== pointerId) return;
-                        fileList.removeEventListener('pointermove', move);
-                        fileList.removeEventListener('pointerup', finish);
-                        fileList.removeEventListener('pointercancel', finish);
-                        fileList.removeEventListener('lostpointercapture', finish);
-                        const position = Array.from(fileList.children).indexOf(item);
-                        updateUI(false);
-                        fileList.children[position].focus();
-                        if (dragging) orderStatus.textContent = `${file.name} moved to position ${position + 1} of ${currentFiles.length}.`;
+                        grip.removeEventListener('pointermove', move);
+                        grip.removeEventListener('pointerup', finish);
+                        grip.removeEventListener('pointercancel', finish);
+                        grip.removeEventListener('lostpointercapture', finish);
+                        finishDrag(event.type === 'pointerup');
                     };
-                    fileList.addEventListener('pointermove', move);
-                    fileList.addEventListener('pointerup', finish);
-                    fileList.addEventListener('pointercancel', finish);
-                    fileList.addEventListener('lostpointercapture', finish);
+                    grip.addEventListener('pointermove', move);
+                    grip.addEventListener('pointerup', finish);
+                    grip.addEventListener('pointercancel', finish);
+                    grip.addEventListener('lostpointercapture', finish);
                 });
             }
             
@@ -278,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Clear files on success
             currentFiles = [];
+            hasCustomOrder = false;
             updateUI();
             
         } catch (err) {

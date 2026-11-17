@@ -219,7 +219,7 @@ body {
 
 .file-item {
     gap: 0.75rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .file-name {
@@ -236,14 +236,13 @@ body {
 
 .file-item.reorderable {
     cursor: grab;
-    touch-action: none;
     user-select: none;
 }
 
 .file-item.dragging {
     cursor: grabbing;
-    background: var(--accent);
-    box-shadow: var(--shadow-hover);
+    opacity: 0.4;
+    background: var(--bg);
 }
 
 .drag-grip {
@@ -370,4 +369,44 @@ body {
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--fg-muted);
+}
+
+.order-hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.order-hint strong { color: var(--fg); }
+.order-hint p { margin-top: 0.35rem; font-size: 0.75rem; }
+.sort-btn {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+.sort-btn:hover:not(:disabled) { background: var(--accent); }
+.sort-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.drag-grip { touch-action: none; padding: 0.5rem 0; }
+.file-item { position: relative; }
+.file-position { color: var(--fg-muted); font-size: 0.75rem; }
+.file-item.drop-before::before, .file-item.drop-after::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    height: 4px;
+    background: var(--fg);
+    border-radius: 2px;
+    pointer-events: none;
+}
+.file-item.drop-before::before { top: -0.6rem; }
+.file-item.drop-after::after { bottom: -0.6rem; }
+@media (max-width: 480px) {
+    .app-container { padding: 1.5rem; }
+    .file-item { padding: 0.5rem; gap: 0.5rem; }
+    .order-hint { align-items: flex-start; }
 }

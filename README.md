@@ -8,7 +8,7 @@ A beautiful, sleek Flask web application designed to simplify operations on Powe
 - **Merge PPTX/PPT**: Combine multiple PowerPoint presentations into a single continuous file.
 - **Convert to PDF**: Instantly transform `.ppt` or `.pptx` presentations into PDF files painlessly.
 - **Merge PDF**: Concatenate multiple PDF documents together completely losslessly.
-- **Choose merge order**: Drag uploaded files to arrange presentations or PDFs before merging, or focus a file row and use the up/down keys. Files merge from top to bottom.
+- **Choose merge order**: Uploads default to ascending natural filename order (1, 2, 3 … 10). Drag and drop rows to customize the order, or use the up/down keys on a focused row. On touch screens, drag the grip. Use “Sort by name” to restore the default; adding files preserves a custom order. Files merge from top to bottom.
 - **Stateless & Scalable**: Files are securely handled, processed in a temporary space, and immediately cleaned up, which keeps your storage free and scales smoothly for multiple users.
 - **Docker Ready**: Effortlessly deployable out of the box using Docker to services like Railway, Heroku, Render, or AWS.
 

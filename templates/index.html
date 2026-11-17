@@ -49,7 +49,10 @@
                 <input type="file" id="file-input" multiple hidden>
             </div>
             
-            <p id="order-hint" class="order-hint hidden">Files merge from top to bottom. Drag files to change their order, or focus a row and use the up/down keys.</p>
+            <div id="order-hint" class="order-hint hidden">
+                <div><strong>Merge order</strong><p>Sorted by name: 1, 2, 3 … 10. Drag to rearrange.</p></div>
+                <button id="sort-files" class="sort-btn" type="button">Sort by name</button>
+            </div>
             <div id="file-list" class="file-list"></div>
             <div id="order-status" class="sr-only" role="status" aria-live="polite"></div>
             
